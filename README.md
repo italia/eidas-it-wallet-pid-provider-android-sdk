@@ -2,13 +2,13 @@
 
 # Eidas-it-wallet-pid-provider-android-sdk
 
-Eidas-it-wallet-pid-provider-android-sdk is  an sdk developed in Kotlin that include the functionality to obtain the PID(Person Identification Data) credential.
+Eidas-it-wallet-pid-provider-android-sdk is an sdk developed in Kotlin that include the functionality to obtain the PID (Person Identification Data) credential.
 
-# - Technical requirements:
+# Technical requirements:
 
 Eidas-it-wallet-pid-provider-android-sdk is compatible with android min sdk 23 and above. Is mandatory to have internet connection and NFC technology.
 
-# - Integration requirements:
+# Integration requirements:
 
 //TODO
 
@@ -20,11 +20,10 @@ In the sdk is present a demo application called AndroidPidProviderDemo that show
 
 This method is used for intialize the Eidas-it-wallet-pid-provider-android-sdk :
 
-	```kotlin
-       initialize(context: Context, pidProviderConfig: PidProviderConfig? = null)
-	```
+	
+    initialize(context: Context, pidProviderConfig: PidProviderConfig? = null)
 
-	```kotlin
+	
 	class PidProviderConfig internal constructor(
 	    var logEnabled: Boolean? = false,
 	    private var baseUrl:String? = null,
@@ -33,7 +32,7 @@ This method is used for intialize the Eidas-it-wallet-pid-provider-android-sdk :
 	    private var walletInstanceAttestation: String? = null,
 	    private var walletUri: String? = null
 	) : Serializable  
-	```
+	
 
 	
 	Initialize method is used to configure sdk with following parameters : 
@@ -71,22 +70,22 @@ This method is used for intialize the Eidas-it-wallet-pid-provider-android-sdk :
 
 This method is used for start the process to obtain the PID :
 
-```kotlin
-startAuthFlow(activity: AppCompatActivity, pidSdkCallback: IPidSdkCallback)
-```
 
-	```kotlin
+startAuthFlow(activity: AppCompatActivity, pidSdkCallback: IPidSdkCallback)
+
+
+	
 	interface IPidSdkCallback {
 
-	    fun onComplete(pidCredential:PIDCredential)
+	    fun onComplete(pidResult:PIDResult)
 
 	    fun onError(throwable: Throwable)
 
 	}
-	```
+	
 
 
-# License: 
+# License: Apache License Version 2.0
 
 
 
