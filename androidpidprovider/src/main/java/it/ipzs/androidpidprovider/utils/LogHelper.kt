@@ -5,7 +5,7 @@ package it.ipzs.androidpidprovider.utils
 import android.content.Context
 import android.util.Log
 
-object LogHelper {
+internal object LogHelper {
 
     fun v(context: Context,tag: String, message: String) {
         if (PidProviderConfigUtils.isLogEnabled(context)) {

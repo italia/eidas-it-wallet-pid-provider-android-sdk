@@ -5,12 +5,15 @@ package it.ipzs.androidpidproviderdemo
 import android.app.Application
 import android.security.keystore.KeyProperties
 import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.jwk.ECKey
+import com.nimbusds.jose.jwk.KeyUse
 import it.ipzs.androidpidprovider.external.PidProviderConfig
 import it.ipzs.androidpidprovider.external.PidProviderSdk
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.interfaces.ECPrivateKey
 import java.security.interfaces.ECPublicKey
+import java.util.*
 
 class PidProviderDemoApplication : Application() {
 
@@ -20,7 +23,6 @@ class PidProviderDemoApplication : Application() {
     }
 
     private fun initializeSDK() {
-        val keyPair = generateKeyPair()
         val walletInstance = "{\n" +
                 "  \"iss\": \"https://wallet-provider.example.org\",\n" +
                 "  \"sub\": \"thumprint-of-the-jwk-in-the-cnf-identifiying-the-wallet\",\n" +
@@ -44,10 +46,7 @@ class PidProviderDemoApplication : Application() {
 
         val pidProviderConfig = PidProviderConfig
             .Builder()
-            .baseUrl("https://localhost:8080/")
-            .walletInstance(walletInstance)
-            .privateKey(keyPair.private as ECPrivateKey)
-            .publicKey(keyPair.public as ECPublicKey)
+            .baseUrl("https://api.wakala.it/it-pid-provider/")
             .walletInstance(walletInstance)
             .walletUri("https://www.google.com")
             .logEnabled(true)
@@ -58,9 +57,4 @@ class PidProviderDemoApplication : Application() {
         )
     }
 
-    private fun generateKeyPair(): KeyPair {
-        val keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC)
-        keyPairGenerator.initialize(Curve.P_256.toECParameterSpec())
-        return keyPairGenerator.generateKeyPair()
-    }
 }

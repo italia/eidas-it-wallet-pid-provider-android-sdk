@@ -3,21 +3,23 @@ package it.ipzs.androidpidprovider.utils
 import it.ipzs.androidpidprovider.external.IPidSdkCallback
 import it.ipzs.androidpidprovider.external.PidCredential
 
+internal open class PidSDKCallbackManager<T> {
 
-internal object PidSdkCallbackManager {
+    private var sdkCallback: IPidSdkCallback<T>? = null
 
-    private var sdkCallback: IPidSdkCallback? = null
-
-    fun setSdkCallback(sdkCallback: IPidSdkCallback){
-        PidSdkCallbackManager.sdkCallback = sdkCallback
+    fun setSDKCallback(sdkCallback: IPidSdkCallback<T>) {
+        this.sdkCallback = sdkCallback
     }
 
-    fun invokeOnComplete(pidCredential: PidCredential) {
-        sdkCallback?.onComplete(pidCredential)
+    fun invokeOnComplete(result: T) {
+        sdkCallback?.onComplete(result)
     }
 
-    fun invokeOnError(throwable: Throwable){
+    fun invokeOnError(throwable: Throwable) {
         sdkCallback?.onError(throwable)
     }
-
 }
+
+internal object PidSdkStartCallbackManager: PidSDKCallbackManager<Boolean>()
+
+internal object PidSdkCompleteCallbackManager: PidSDKCallbackManager<PidCredential>()

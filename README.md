@@ -1,12 +1,11 @@
 
+EUDI-IT-Wallet-Pid-Provider-Android-Sdk
 
-# Eidas-it-wallet-pid-provider-android-sdk
-
-Eidas-it-wallet-pid-provider-android-sdk is an sdk developed in Kotlin that include the functionality to obtain the PID (Person Identification Data) credential.
+EUDI-IT-Wallet-Pid-Provider-Android-Sdk is an sdk developed in Kotlin for Android OS that include the functionality to obtain the Italian PID (Person Identification Data) credential in according to [Italian EUDI Wallet Technical Specifications](https://italia.github.io/eudi-wallet-it-docs/en/pid-data-model.html)
 
 # Technical requirements:
 
-Eidas-it-wallet-pid-provider-android-sdk is compatible with android min sdk 23 and above. Is mandatory to have internet connection and NFC technology.
+EUDI-IT-Wallet-Pid-Provider-android-sdk is compatible with android min sdk 23 and above. Is mandatory to have internet connection and NFC technology.
 
 # Integration requirements:
 
@@ -18,17 +17,15 @@ In the sdk is present a demo application called AndroidPidProviderDemo that show
 
 # Configuration :
 
-This method is used for intialize the Eidas-it-wallet-pid-provider-android-sdk :
+This method is used for initialize the EUDI-IT-Wallet-Pid-Provider-Android-Sdk :
 
-	
+
     initialize(context: Context, pidProviderConfig: PidProviderConfig? = null)
 
 	
 	class PidProviderConfig internal constructor(
 	    var logEnabled: Boolean? = false,
 	    private var baseUrl:String? = null,
-	    private var ecPrivateKey: ECPrivateKey,
-	    private var ecPublicKey: ECPublicKey,
 	    private var walletInstanceAttestation: String? = null,
 	    private var walletUri: String? = null
 	) : Serializable  
@@ -39,50 +36,42 @@ This method is used for intialize the Eidas-it-wallet-pid-provider-android-sdk :
 
 	- log enabled : if true enable sdk logs
 	- baseUrl : Url for the PID provider api needed by the sdk
-	- ecPrivateKey : Elliptic curve private key used for the wallet instance attestation 
-	- ecPublicKey : Elliptic curve public key used for the wallet instance attestation 
- 	- walletInstanceAttestation : 
+ 	- walletInstanceAttestation : As defined in the techical specification
+	- walletUri : Domain of the wallet application
 
-		example : 
+After initialize the sdk methods are to be called in the following order:
 
-			{
-			  "iss": "https://wallet-provider.example.org",
-			  "sub": "$thumprint-of-the-jwk-in-the-cnf-identifiying-the-wallet",
-			  "iat": 1665137911,
-			  "exp": 1665138911,
-			  "type": "WalletInstanceAttestation",
-			  "supported_LoA": "high",
-			  "policy_uri": "https://wallet-provider.example.com/privacy_policy",
-			  "tos_uri": "https://wallet-provider.example.com/info_policy",
-			  "logo_uri": "https://wallet-provider.example.com/sgd-cmyk-150dpi-90mm.svg",
-			  "cnf": {
-			    "jwk": {
-		             "kty": "EC",
-		             "kid": "wallet-pub-jwk-kid",
-		             "crv": "P-256",
-		             "x": "a1MdTboSUbq4SOx4LmhOI2AewVkZWDQD0gP9nOiSnHU",
-		             "y": "f8n1IgpfYOBFZM0KxkTd0N5Y2P-INNmU_6S-gDro_FE"
-			   }
-			  }
-			}
+- initJwtForPar(context:Context):String?
+  This method is used for create Jwt for par request described in PKCE flow. Returns an unsigned JWT that the calling application will have to sign it and pass it into the next API startAuthFlow.
 
-	- walletUri : Url where the wallet application is register by app links/deepLink 
+- fun startAuthFlow(activity: AppCompatActivity, signedJwtForPar: String, jwkForDPoP: String, pidSdkCallback: IPidSdkCallback<Boolean>){
 
-This method is used for start the process to obtain the PID :
+  interface IPidSdkCallback<T> {
 
+  fun onComplete(result: T?)
 
-startAuthFlow(activity: AppCompatActivity, pidSdkCallback: IPidSdkCallback)
+  fun onError(throwable: Throwable)
 
+  }
 
-	
-	interface IPidSdkCallback {
+This method is used for start the process to obtain the PID. It requires the signed jwt of the previous api and a jwk for the DPoP described in the PKCE Flow. Returns true when the process is finished with success result.
 
-	    fun onComplete(pidResult:PIDResult)
+DPoP jwk non-normative example is present in technical specifications.
 
-	    fun onError(throwable: Throwable)
+- fun getUnsignedJwtForProof(context: Context): String
+  This method is used to recover the unsigned jwt. The calling application will have to sign it and pass it in the api completeAuthFlow to retrieve the credentials.
 
-	}
-	
+- fun completeAuthFlow(activity: AppCompatActivity, signedJwtForProof: String, pidSdkCallback: IPidSdkCallback<PidCredential>)
+  This method complete the PKCE flow and returns the italian PID Credential.
+
+Pid Credential Result : 
+
+data class PidCredential(
+   var format: String?,
+   var credential: String?,
+   var nonce: String?,
+   var nonceExpires: Long?
+) : Serializable
 
 
 # License: Apache License Version 2.0

@@ -4,16 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import android.util.Base64
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.nimbusds.jose.jwk.JWK
 import it.ipzs.androidpidprovider.R
 import it.ipzs.androidpidprovider.utils.SingletonHolder
-import okio.ByteString.Companion.decodeBase64
-import java.security.KeyFactory
-import java.security.interfaces.ECPrivateKey
-import java.security.interfaces.ECPublicKey
-import java.security.spec.*
 
 
 internal class PidProviderSDKShared private constructor(context: Context) {
@@ -26,10 +21,13 @@ internal class PidProviderSDKShared private constructor(context: Context) {
         private val KEY_SECURE_KEY_WALLET_INSTANCE_ATTESTATION = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_instance_attestation")
         private val KEY_SECURE_KEY_WALLET_URI = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_wallet_uri")
         private val KEY_SECURE_KEY_CODE_VERIFIER = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_code_verifier")
+        private val KEY_SECURE_KEY_CODE_CHALLENGE = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_code_challenge")
         private val KEY_SECURE_KEY_CLIENT_ID = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_client_id")
         private val KEY_SECURE_KEY_TOKEN = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_token")
-        private val KEY_SECURE_KEY_EC_PRIVATE = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_ec_private_key")
-        private val KEY_SECURE_KEY_EC_PUBLIC = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_ec_public_key")
+        private val KEY_SECURE_KEY_JWT_PAR = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_jwt_par")
+        private val KEY_SECURE_KEY_UNSIGNED_JWT_PROOF = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_unsigned_jwt_proof")
+        private val KEY_SECURE_KEY_SIGNED_JWT_PROOF = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_signed_jwt_proof")
+        private val KEY_SECURE_KEY_JWK = KEY_SECURE_KEY_SHARED_NAME.plus(".pid_jwk")
     }
 
     private val sharedPreferences: SharedPreferences by lazy { getSecureSharedPreferences(context) }
@@ -129,6 +127,19 @@ internal class PidProviderSDKShared private constructor(context: Context) {
         return sharedPreferences.getString(KEY_SECURE_KEY_CODE_VERIFIER, "").orEmpty()
     }
 
+    // Code challenge
+
+    fun saveCodeChallenge(codeChallenge: String) {
+        sharedPreferences.edit().apply {
+            putString(KEY_SECURE_KEY_CODE_CHALLENGE, codeChallenge)
+            apply()
+        }
+    }
+
+    fun getCodeChallenge(): String {
+        return sharedPreferences.getString(KEY_SECURE_KEY_CODE_CHALLENGE, "").orEmpty()
+    }
+
     // Client Id
 
     fun saveClientId(clientId: String) {
@@ -155,48 +166,54 @@ internal class PidProviderSDKShared private constructor(context: Context) {
         return sharedPreferences.getString(KEY_SECURE_KEY_TOKEN, "").orEmpty()
     }
 
-    // Private Key
+    // JWT PAR
 
-    fun savePrivateKey(privateKey: ECPrivateKey) {
-        val byteArray = privateKey.encoded
-        privateKey.algorithm
-        val base64String = Base64.encodeToString(byteArray,
-            Base64.NO_PADDING or Base64.URL_SAFE or Base64.NO_WRAP)
+    fun saveUnsignedJWTPar(jwt: String) {
         sharedPreferences.edit().apply {
-            putString(KEY_SECURE_KEY_EC_PRIVATE, base64String)
+            putString(KEY_SECURE_KEY_JWT_PAR, jwt)
             apply()
         }
     }
 
-    fun getPrivateKey(): ECPrivateKey {
-        val base64String = sharedPreferences.getString(KEY_SECURE_KEY_EC_PRIVATE, "").orEmpty()
-        val byteArray = base64String.decodeBase64()?.toByteArray()
-        val keyFactory = KeyFactory.getInstance("EC")
-        val privateKeySpec: EncodedKeySpec = PKCS8EncodedKeySpec(byteArray)
-        val privateKey = keyFactory.generatePrivate(privateKeySpec)
-        return privateKey as ECPrivateKey
+    fun getUnsignedJWTPar(): String {
+        return sharedPreferences.getString(KEY_SECURE_KEY_JWT_PAR, "").orEmpty()
     }
 
+    // JWT PROOF
 
-    // Public Key
-
-    fun savePublicKey(publicKey: ECPublicKey) {
-        val byteArray = publicKey.encoded
-        val base64String = Base64.encodeToString(byteArray,
-            Base64.NO_PADDING or Base64.URL_SAFE or Base64.NO_WRAP)
+    fun saveUnsignedJWTProof(jwt: String) {
         sharedPreferences.edit().apply {
-            putString(KEY_SECURE_KEY_EC_PUBLIC, base64String)
+            putString(KEY_SECURE_KEY_UNSIGNED_JWT_PROOF, jwt)
             apply()
         }
     }
 
-    @Suppress("unused")
-    fun getPublicKey(): ECPublicKey {
-        val base64String = sharedPreferences.getString(KEY_SECURE_KEY_EC_PUBLIC, "").orEmpty()
-        val byteArray = base64String.decodeBase64()?.toByteArray()
-        val keyFactory = KeyFactory.getInstance("EC")
-        val publicKeySpec = X509EncodedKeySpec(byteArray)
-        val publicKey = keyFactory.generatePublic(publicKeySpec)
-        return publicKey as ECPublicKey
+    fun getUnsignedJWTProof(): String {
+        return sharedPreferences.getString(KEY_SECURE_KEY_UNSIGNED_JWT_PROOF, "").orEmpty()
+    }
+
+    fun saveSignedJWTProof(jwt: String) {
+        sharedPreferences.edit().apply {
+            putString(KEY_SECURE_KEY_SIGNED_JWT_PROOF, jwt)
+            apply()
+        }
+    }
+
+    fun getSignedJWTProof(): String {
+        return sharedPreferences.getString(KEY_SECURE_KEY_SIGNED_JWT_PROOF, "").orEmpty()
+    }
+
+    // JWK
+
+    fun saveJWK(jwkJsonString: String) {
+        sharedPreferences.edit().apply {
+            putString(KEY_SECURE_KEY_JWK, jwkJsonString)
+            apply()
+        }
+    }
+
+    fun getJWK(): JWK {
+        val jwkJsonString = sharedPreferences.getString(KEY_SECURE_KEY_JWK, "").orEmpty()
+        return JWK.parse(jwkJsonString)
     }
 }

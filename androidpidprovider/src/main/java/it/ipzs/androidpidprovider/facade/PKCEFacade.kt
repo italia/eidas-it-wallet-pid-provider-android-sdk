@@ -3,20 +3,20 @@
 package it.ipzs.androidpidprovider.facade
 
 import android.content.Context
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
+import it.ipzs.androidpidprovider.constant.UrlConstant
 import it.ipzs.androidpidprovider.entity.Proof
 import it.ipzs.androidpidprovider.exception.PIDProviderException
 import it.ipzs.androidpidprovider.external.PidCredential
 import it.ipzs.androidpidprovider.network.datasource.PidProviderDataSource
 import it.ipzs.androidpidprovider.storage.PidProviderSDKShared
 import it.ipzs.androidpidprovider.utils.*
-import it.ipzs.androidpidprovider.utils.DPoPUtils
-import it.ipzs.androidpidprovider.utils.PKCEUtils
-import it.ipzs.androidpidprovider.utils.PidProviderConfigUtils
-import it.ipzs.androidpidprovider.utils.PidSdkCallbackManager
-import it.ipzs.androidpidprovider.utils.UrlUtils
 import kotlinx.coroutines.*
-import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 internal class PKCEFacade(
@@ -24,21 +24,39 @@ internal class PKCEFacade(
     private val dataSource: PidProviderDataSource
 ) : CoroutineScope {
 
-    suspend fun startPKCE(): String {
+    fun generateUnsignedJwtForPar(): String? {
+        try {
+            val sharedPref = PidProviderSDKShared.getInstance(context)
+            val codeVerifier = PKCEUtils.createCodeVerifier()
+            sharedPref.saveCodeVerifier(codeVerifier)
+            val codeChallenge = PKCEUtils.createCodeChallenge(codeVerifier)
+            sharedPref.saveCodeChallenge(codeChallenge)
+            val walletInstanceJsonString =
+                PidProviderConfigUtils.getWalletInstanceAttestation(context)
+            val redirectUri = sharedPref.getWalletUri()
+            val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJsonString)
+            sharedPref.saveClientId(jwkThumbprint)
+            return PKCEUtils.generateJWTForPar(
+                jwkThumbprint,
+                codeChallenge,
+                redirectUri,
+                walletInstanceJsonString
+            )
+        } catch (exception: Throwable) {
+            return null
+        }
+    }
+
+    suspend fun requestPar(signedJwtForPar: String): String {
         val cdRequestUri = CompletableDeferred<String>()
         withContext(Dispatchers.IO) {
             try {
                 val sharedPref = PidProviderSDKShared.getInstance(context)
-                val codeVerifier = PKCEUtils.createCodeVerifier()
-                sharedPref.saveCodeVerifier(codeVerifier)
-                val codeChallenge = PKCEUtils.createCodeChallenge(codeVerifier)
-                val redirectUri = sharedPref.getWalletUri()
+                val codeChallenge = sharedPref.getCodeChallenge()
                 val walletInstanceJsonString =
                     PidProviderConfigUtils.getWalletInstanceAttestation(context)
                 val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJsonString)
                 sharedPref.saveClientId(jwkThumbprint)
-
-                val privateKey = sharedPref.getPrivateKey()
 
                 val parResponse = dataSource.requestPar(
                     responseType = PKCEConstant.JWT_RESPONSE_TYPE_VALUE,
@@ -47,13 +65,7 @@ internal class PKCEFacade(
                     codeChallengeMethod = PKCEConstant.JWT_CODE_CHALLENGE_METHOD_VALUE,
                     clientAssertionType = PKCEConstant.JWT_CLIENT_ASSERTION_TYPE_VALUE,
                     clientAssertion = walletInstanceJsonString,
-                    request = PKCEUtils.generateJWTForPar(
-                        jwkThumbprint,
-                        codeChallenge,
-                        redirectUri,
-                        walletInstanceJsonString,
-                        privateKey
-                    )
+                    request = signedJwtForPar
                 )
 
                 if (parResponse != null) {
@@ -63,14 +75,67 @@ internal class PKCEFacade(
                 }
             } catch (error: Throwable) {
                 cdRequestUri.cancel(error.message.toString())
-                PidSdkCallbackManager.invokeOnError(error)
+                PidSdkStartCallbackManager.invokeOnError(error)
             }
         }
         return cdRequestUri.await()
     }
 
-    suspend fun getTokenAndCredential(code: String, redirectUri: String): PidCredential {
-        val cdRequestUri = CompletableDeferred<PidCredential>()
+    fun loadAuthorizeWebview(
+        activity: AppCompatActivity,
+        requestUri: String,
+        cdCode: CompletableDeferred<String?>
+    ) {
+        val clientId = PidProviderSDKShared.getInstance(activity).getClientId()
+        val url = UrlUtils.buildAuthorizeUrl(activity, clientId, requestUri)
+        val walletUri = PidProviderConfigUtils.getWalletUri(activity)
+
+        activity.runOnUiThread {
+            val webView = WebView(activity)
+            webView.apply {
+                webViewClient = object : WebViewClient() {
+
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView?,
+                        request: WebResourceRequest?
+                    ): Boolean {
+                        val currentUri = request?.url
+                        if (currentUri.toString().contains(walletUri, true)) {
+                            val code = currentUri?.getQueryParameters(UrlConstant.CODE_PARAM)?.first().orEmpty()
+                            cdCode.complete(code)
+                        }
+                        return super.shouldOverrideUrlLoading(view, request)
+                    }
+
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+                        if (url?.contains("login") == true) {
+                            val jsScript = "document.getElementById('username').value = 'user'; " +
+                                    "document.getElementById('username').readOnly = true; " +
+                                    "document.getElementById('password').value = 'password'; " +
+                                    "document.getElementById('password').readOnly = true;" +
+                                    "document.getElementsByClassName('form-signin')[0].submit()"
+                            view?.evaluateJavascript(jsScript
+                            ) { p0 -> cdCode.complete(p0) }
+                        }
+                    }
+
+                    override fun onReceivedError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        error: WebResourceError?
+                    ) {
+                        super.onReceivedError(view, request, error)
+                        PidSdkStartCallbackManager.invokeOnError(Exception(error.toString()))
+                    }
+                }
+                loadUrl(url)
+            }
+        }
+    }
+
+    suspend fun getToken(code: String, redirectUri: String): String {
+        val cdProof = CompletableDeferred<String>()
         withContext(Dispatchers.IO) {
             try {
                 val sharedPreferences = PidProviderSDKShared.getInstance(context)
@@ -79,7 +144,6 @@ internal class PKCEFacade(
                 val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJsonString)
                 val codeVerifier = sharedPreferences.getCodeVerifier()
 
-                // Token
                 val tokenUrl = UrlUtils.buildTokenUrl(context)
                 val dPopToken = DPoPUtils.generateDPoP(context, "POST", tokenUrl)
                 val tokenResponse = dataSource.requestToken(
@@ -95,46 +159,59 @@ internal class PKCEFacade(
                 if (tokenResponse != null) {
                     val accessToken = tokenResponse.accessToken.orEmpty()
                     sharedPreferences.saveToken(accessToken)
-                    val privateKey = sharedPreferences.getPrivateKey()
-
-                    // Credential
-                    val credentialUrl = UrlUtils.buildCredentialUrl(context)
-                    val dPopCredential = DPoPUtils.generateDPoP(context, "POST", credentialUrl)
-                    val proof = Proof().apply {
-                        this.proofType = PKCEConstant.PROOF_TYPE
-                        this.jwt = PKCEUtils.generateJWTForProof(
-                            context,
-                            jwkThumbprint,
-                            tokenResponse.cNonce.orEmpty(),
-                            privateKey
-                        )
-                    }
-                    val credentialResponse = dataSource.requestCredential(
-                        dPop = dPopCredential,
-                        authorization = accessToken,
-                        credentialDefinition = PKCEConstant.CREDENTIAL_DEFINITION_VALUE,
-                        format = PKCEConstant.FORMAT_CREDENTIAL_DEFINITION,
-                        proof = Gson().toJson(proof)
+                    val jwtProof = PKCEUtils.generateJWTForProof(
+                        context,
+                        jwkThumbprint,
+                        tokenResponse.cNonce.orEmpty()
                     )
-
-                    if (credentialResponse != null) {
-                        val pidCredential = PidCredential(
-                            true,
-                            credentialResponse.format,
-                            credentialResponse.credential,
-                            credentialResponse.cNonce,
-                            credentialResponse.cNonceExpiresIn,
-                        )
-                        cdRequestUri.complete(pidCredential)
-                    } else {
-                        throw PIDProviderException("credential response is null")
-                    }
+                    cdProof.complete(jwtProof)
                 } else {
                     throw PIDProviderException("token response is null")
                 }
             } catch (error: Throwable) {
+                cdProof.cancel(error.message.toString())
+                PidSdkStartCallbackManager.invokeOnError(error)
+            }
+        }
+        return cdProof.await()
+    }
+
+    suspend fun getCredential(): PidCredential {
+        val cdRequestUri = CompletableDeferred<PidCredential>()
+        withContext(Dispatchers.IO) {
+            try {
+                val sharedPreferences = PidProviderSDKShared.getInstance(context)
+                val accessToken = sharedPreferences.getToken()
+
+                val credentialUrl = UrlUtils.buildCredentialUrl(context)
+                val dPopCredential = DPoPUtils.generateDPoP(context, "POST", credentialUrl)
+                val signedJwtForProof = sharedPreferences.getSignedJWTProof()
+                val proof = Proof().apply {
+                    this.proofType = PKCEConstant.PROOF_TYPE
+                    this.jwt = signedJwtForProof
+                }
+                val credentialResponse = dataSource.requestCredential(
+                    dPop = dPopCredential,
+                    authorization = accessToken,
+                    credentialDefinition = PKCEConstant.CREDENTIAL_DEFINITION_VALUE,
+                    format = PKCEConstant.FORMAT_CREDENTIAL_DEFINITION,
+                    proof = Gson().toJson(proof)
+                )
+
+                if (credentialResponse != null) {
+                    val pidCredential = PidCredential(
+                        credentialResponse.format,
+                        credentialResponse.credential,
+                        credentialResponse.cNonce,
+                        credentialResponse.cNonceExpiresIn,
+                    )
+                    cdRequestUri.complete(pidCredential)
+                } else {
+                    throw PIDProviderException("credential response is null")
+                }
+            } catch (error: Throwable) {
                 cdRequestUri.cancel(error.message.toString())
-                PidSdkCallbackManager.invokeOnError(error)
+                PidSdkCompleteCallbackManager.invokeOnError(error)
             }
         }
         return cdRequestUri.await()

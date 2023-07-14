@@ -3,22 +3,44 @@
 package it.ipzs.androidpidprovider.facade
 
 import android.content.Context
+import androidx.appcompat.app.AppCompatActivity
 import it.ipzs.androidpidprovider.external.PidCredential
 import it.ipzs.androidpidprovider.network.datasource.PidProviderDataSource
+import it.ipzs.androidpidprovider.network.datasource.PidProviderDataSourceImpl
+import it.ipzs.androidpidprovider.storage.PidProviderSDKShared
+import it.ipzs.androidpidprovider.utils.PidSdkStartCallbackManager
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 internal class PidProviderFacade(
-    context: Context,
-    dataSource: PidProviderDataSource
+    var context: Context
 ) {
 
-    private val pkceFacade = PKCEFacade(context, dataSource)
+    private var dataSourceImpl: PidProviderDataSource = PidProviderDataSourceImpl(context)
+    private val pkceFacade = PKCEFacade(context, dataSourceImpl)
 
-    suspend fun startAuthFlow(): String {
-        return pkceFacade.startPKCE()
+    fun generateJwtForPar(): String? {
+        return pkceFacade.generateUnsignedJwtForPar()
     }
 
-    suspend fun getTokenAndCredential(code: String, requestUri: String): PidCredential {
-        return pkceFacade.getTokenAndCredential(code, requestUri)
+    fun startAuthFlow(activity: AppCompatActivity, signedJwtForPar: String, jwkForDPoP: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val cdAuthorize = CompletableDeferred<String?>()
+            val sharedPreferences = PidProviderSDKShared.getInstance(context)
+            sharedPreferences.saveJWK(jwkForDPoP)
+            val requestUri = pkceFacade.requestPar(signedJwtForPar)
+            pkceFacade.loadAuthorizeWebview(activity, requestUri,cdAuthorize)
+            val authorizeResponse = cdAuthorize.await().orEmpty()
+            val proof = pkceFacade.getToken(authorizeResponse, requestUri)
+            sharedPreferences.saveUnsignedJWTProof(proof)
+            PidSdkStartCallbackManager.invokeOnComplete(true)
+        }
+    }
+
+    suspend fun getCredential(): PidCredential {
+        return pkceFacade.getCredential()
     }
 
 }

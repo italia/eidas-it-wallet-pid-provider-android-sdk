@@ -1,9 +1,10 @@
 package it.ipzs.androidpidprovider.external
 
-interface IPidSdkCallback {
+interface IPidSdkCallback<T> {
 
-    fun onComplete(pidCredential: PidCredential?)
+    fun onComplete(result: T?)
 
     fun onError(throwable: Throwable)
 
 }
+

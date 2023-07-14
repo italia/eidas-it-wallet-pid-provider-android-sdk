@@ -61,8 +61,7 @@ internal object PKCEUtils {
         jwkThumbprint: String,
         codeChallenge: String,
         redirectUri: String,
-        walletInstanceJsonString: String,
-        privateKey: ECPrivateKey,
+        walletInstanceJsonString: String
     ): String {
         val mapHeaderClaims = HashMap<String, Any>()
         mapHeaderClaims[PKCEConstant.HEADER_JWT_ALG_KEY] = PKCEConstant.HEADER_JWT_ALG_VALUE
@@ -92,7 +91,6 @@ internal object PKCEUtils {
         }
 
         return jwtBuilder
-            .signWith(SignatureAlgorithm.ES256, privateKey)
             .compact()
     }
 
@@ -100,15 +98,10 @@ internal object PKCEUtils {
         context: Context,
         jwkThumbprint: String,
         nonce: String,
-        privateKey: ECPrivateKey,
     ): String {
         val pidProviderUrl = PidProviderSDKShared.getInstance(context).getBaseURL()
         val mapHeaderClaims = HashMap<String, Any>()
         mapHeaderClaims[PKCEConstant.HEADER_JWT_ALG_KEY] = PKCEConstant.HEADER_JWT_ALG_VALUE
-        mapHeaderClaims[PKCEConstant.HEADER_JWT_KID_KEY] = Base64.encodeToString(
-            privateKey.encoded,
-            Base64.NO_PADDING or Base64.URL_SAFE or Base64.NO_WRAP
-        )
         mapHeaderClaims[PKCEConstant.HEADER_JWT_TYP_KEY] = PKCEConstant.HEADER_JWT_TYP_VALUE
         val jwtBuilder = Jwts.builder()
         jwtBuilder.setHeader(mapHeaderClaims)
@@ -117,7 +110,6 @@ internal object PKCEUtils {
             jwtBuilder.claim(key, value)
         }
         return jwtBuilder
-            .signWith(SignatureAlgorithm.ES256, privateKey)
             .compact()
     }
 
