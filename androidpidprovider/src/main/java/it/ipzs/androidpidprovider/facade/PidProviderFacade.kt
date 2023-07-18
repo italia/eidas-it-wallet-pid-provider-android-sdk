@@ -9,6 +9,7 @@ import it.ipzs.androidpidprovider.network.datasource.PidProviderDataSource
 import it.ipzs.androidpidprovider.network.datasource.PidProviderDataSourceImpl
 import it.ipzs.androidpidprovider.storage.PidProviderSDKShared
 import it.ipzs.androidpidprovider.utils.PidSdkStartCallbackManager
+import it.ipzs.cieidsdk.data.PidCieData
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,8 +40,8 @@ internal class PidProviderFacade(
         }
     }
 
-    suspend fun getCredential(): PidCredential {
-        return pkceFacade.getCredential()
+    suspend fun getCredential(pidCieData: PidCieData?): PidCredential {
+        return pkceFacade.getCredential(pidCieData)
     }
 
 }

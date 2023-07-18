@@ -6,17 +6,46 @@
     android:layout_height="match_parent"
     tools:context="it.ipzs.androidpidproviderdemo.MainDemoActivity">
 
-    <!--suppress AndroidUnknownAttribute -->
     <ProgressBar
         android:id="@+id/progress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:indeterminate="true"
-        android:indeterminateTint="#271CC1"
+        android:indeterminateTint="#06c"
         android:indeterminateTintMode="src_in"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <!--suppress AndroidUnknownAttribute -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+
+            <TextView
+                android:id="@+id/tvCredential"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dimen_20"
+                android:ellipsize="end"
+                android:paddingStart="@dimen/dimen_20"
+                android:paddingEnd="@dimen/dimen_20"
+                android:visibility="gone"
+                android:textSize="@dimen/font_22"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

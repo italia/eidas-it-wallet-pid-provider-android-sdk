@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <string name="insert_your_pin_card">Inserisci il PIN della tua carta di identità</string>
+    <string name="pin_is_code">Il PIN è un codice di 8 cifre.</string>
+    <string name="pin">PIN</string>
+    <string name="continue_on">Continua</string>
+    <string name="cancel">Annulla</string>
+
+    <string name="cie_scan_ready">Pronto per la scansione</string>
+    <string name="tap_cie">Appoggia la tua carta d\'identità elettronica nella parte alta del telefono</string>
+    <string name="cie_reading">Lettura in corso</string>
+    <string name="cie_reading_desc" tools:ignore="TypographyEllipsis">Tieni ferma la carta per qualche secondo...</string>
+</resources>

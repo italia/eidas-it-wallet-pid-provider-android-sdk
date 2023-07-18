@@ -35,7 +35,7 @@ android {
 
 ext {
     kotlin_version = '1.7.20'
-    core_version = '1.7.0'
+    core_version = '1.10.1'
     activity_version = '1.7.2'
     fragment_version = '1.6.0'
     browser_version = '1.5.0'
@@ -47,12 +47,15 @@ ext {
     security_version = '1.1.0-alpha06'
     jose_jwt_version = '9.23'
     oauth2_version = '10.9.1'
+    lottie_version = '5.1.1'
 }
 
 dependencies {
 
+    api project(path: ':cieidsdk')
+
     implementation "androidx.core:core-ktx:$core_version"
-    implementation "com.google.android.material:material:1.4.0"
+    implementation "com.google.android.material:material:1.9.0"
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
     implementation "androidx.appcompat:appcompat:$appcompat_version"
     implementation "androidx.activity:activity-ktx:$activity_version"
@@ -75,6 +78,9 @@ dependencies {
     implementation "com.nimbusds:nimbus-jose-jwt:$jose_jwt_version"
     implementation "com.nimbusds:oauth2-oidc-sdk:$oauth2_version"
     implementation 'io.jsonwebtoken:jjwt:0.7.0'
+
+    //Animation
+    implementation "com.airbnb.android:lottie:$lottie_version"
 
     // Test
     testImplementation 'junit:junit:4.13.2'

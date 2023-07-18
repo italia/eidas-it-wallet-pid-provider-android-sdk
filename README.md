@@ -1,11 +1,12 @@
 
-# EUDI-IT-Wallet-Pid-Provider-Android-Sdk
+EUDI-it-wallet-pid-provider-android-sdk
 
-EUDI-IT-Wallet-Pid-Provider-Android-Sdk is an sdk developed in Kotlin for Android OS that include the functionality to obtain the Italian PID (Person Identification Data) credential in according to [Italian EUDI Wallet Technical Specifications](https://italia.github.io/eudi-wallet-it-docs/en/pid-data-model.html)
+EUDI-it-wallet-pid-provider-android-sdk is an sdk developed in Kotlin that include the functionality to obtain the Italian PID (Person Identification Data) credential
+according to [Italian EUDI Wallet Technical Specifications](https://italia.github.io/eudi-wallet-it-docs/en/pid-issuance.html).
 
 # Technical requirements:
 
-EUDI-IT-Wallet-Pid-Provider-android-sdk is compatible with android min sdk 23 and above. Is mandatory to have internet connection and NFC technology.
+EUDI-it-wallet-pid-provider-android-sdk is compatible with android min sdk 23 and above. Is mandatory to have internet connection and NFC technology.
 
 # Integration requirements:
 
@@ -17,7 +18,7 @@ In the sdk is present a demo application called AndroidPidProviderDemo that show
 
 # Configuration :
 
-This method is used for initialize the EUDI-IT-Wallet-Pid-Provider-Android-Sdk :
+This method is used for intialize the EUDI-it-wallet-pid-provider-android-sdk :
 
 
     initialize(context: Context, pidProviderConfig: PidProviderConfig? = null)
@@ -56,7 +57,27 @@ After initialize the sdk methods are to be called in the following order:
 
 This method is used for start the process to obtain the PID. It requires the signed jwt of the previous api and a jwk for the DPoP described in the PKCE Flow. Returns true when the process is finished with success result.
 
-DPoP jwk non-normative example is present in technical specifications.
+DPoP jwk example:
+
+{
+"typ": "dpop+jwt",
+"alg": "ES256",
+"jwk": {
+"kty": "EC",
+"use": "sig",
+"crv": "P-256",
+"kid": "0b922c6d-4a52-4898-a39b-13a0d1468c57",
+"x": "usMMFcVYD_K3WpbS8lOU_YqW2LtXhKU7Y7ZbRL9hRiY",
+"y": "Ly4MR09mIi85aQFfz0BIwkZWnGgVHvt7mkCHM4zy6NU"
+}
+}
+.
+{
+"htm": "POST",
+"htu": "http://localhost:8080/credential",
+"iat": 1688496689,
+"jti": "zqhl40Vt2p9mMKoB"
+}
 
 - fun getUnsignedJwtForProof(context: Context): String
   This method is used to recover the unsigned jwt. The calling application will have to sign it and pass it in the api completeAuthFlow to retrieve the credentials.
@@ -64,15 +85,14 @@ DPoP jwk non-normative example is present in technical specifications.
 - fun completeAuthFlow(activity: AppCompatActivity, signedJwtForProof: String, pidSdkCallback: IPidSdkCallback<PidCredential>)
   This method complete the PKCE flow and returns the italian PID Credential.
 
-Pid Credential Result : 
-
 data class PidCredential(
-   var format: String?,
-   var credential: String?,
-   var nonce: String?,
-   var nonceExpires: Long?
+var format: String?,
+var credential: String?,
+var nonce: String?,
+var nonceExpires: Long?
 ) : Serializable
 
+The format of this data class is defined by Italian EUDI Wallet Technical Specifications
 
 # License: Apache License Version 2.0
 

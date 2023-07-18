@@ -2,6 +2,7 @@
 
 package it.ipzs.androidpidprovider.facade
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -16,6 +17,7 @@ import it.ipzs.androidpidprovider.external.PidCredential
 import it.ipzs.androidpidprovider.network.datasource.PidProviderDataSource
 import it.ipzs.androidpidprovider.storage.PidProviderSDKShared
 import it.ipzs.androidpidprovider.utils.*
+import it.ipzs.cieidsdk.data.PidCieData
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
@@ -81,6 +83,7 @@ internal class PKCEFacade(
         return cdRequestUri.await()
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     fun loadAuthorizeWebview(
         activity: AppCompatActivity,
         requestUri: String,
@@ -117,9 +120,9 @@ internal class PKCEFacade(
                                     "document.getElementsByClassName('form-signin')[0].submit()"
                             view?.evaluateJavascript(jsScript
                             ) { p0 -> cdCode.complete(p0) }
+
                         }
                     }
-
                     override fun onReceivedError(
                         view: WebView?,
                         request: WebResourceRequest?,
@@ -129,8 +132,10 @@ internal class PKCEFacade(
                         PidSdkStartCallbackManager.invokeOnError(Exception(error.toString()))
                     }
                 }
+                settings.javaScriptEnabled = true
                 loadUrl(url)
             }
+
         }
     }
 
@@ -176,7 +181,7 @@ internal class PKCEFacade(
         return cdProof.await()
     }
 
-    suspend fun getCredential(): PidCredential {
+    suspend fun getCredential(pidCieData: PidCieData?): PidCredential {
         val cdRequestUri = CompletableDeferred<PidCredential>()
         withContext(Dispatchers.IO) {
             try {
@@ -189,6 +194,7 @@ internal class PKCEFacade(
                 val proof = Proof().apply {
                     this.proofType = PKCEConstant.PROOF_TYPE
                     this.jwt = signedJwtForProof
+                    this.pidCieData = pidCieData
                 }
                 val credentialResponse = dataSource.requestCredential(
                     dPop = dPopCredential,
@@ -203,7 +209,7 @@ internal class PKCEFacade(
                         credentialResponse.format,
                         credentialResponse.credential,
                         credentialResponse.cNonce,
-                        credentialResponse.cNonceExpiresIn,
+                        credentialResponse.cNonceExpiresIn
                     )
                     cdRequestUri.complete(pidCredential)
                 } else {

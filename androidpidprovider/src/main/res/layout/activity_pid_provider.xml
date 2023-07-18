@@ -2,8 +2,19 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@android:color/darker_gray"
+    android:background="@android:color/white"
     android:layout_height="match_parent">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainerView"
+        android:name="it.ipzs.androidpidprovider.view.cie.CieAuthFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone"/>
 
     <WebView
         android:id="@+id/webViewPid"
@@ -11,16 +22,17 @@
         android:layout_height="match_parent"
         android:visibility="invisible" />
 
-    <ProgressBar
-        android:id="@+id/progressPidProvider"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:indeterminate="true"
-        android:indeterminateTint="#F00"
-        android:indeterminateTintMode="src_in"
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottieView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.5"
+        app:lottie_autoPlay="true"
+        app:lottie_fileName="@string/lottie_loader"
+        app:lottie_loop="true" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

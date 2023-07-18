@@ -2,14 +2,18 @@ package it.ipzs.androidpidproviderdemo
 
 import android.os.Bundle
 import android.security.keystore.KeyProperties
+import android.text.TextUtils
 import android.util.Log
+import android.view.View
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.KeyUse
+import com.nimbusds.jose.shaded.gson.Gson
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
@@ -36,6 +40,7 @@ class MainDemoActivity :AppCompatActivity() {
 
     private fun startSDKFlow() {
         val progress = findViewById<ProgressBar>(R.id.progress)
+
 
         // Retrieves the unsigned jwt for the par request
         val unsignedJwtForPar = PidProviderSdk.initJwtForPar(this)
@@ -66,6 +71,8 @@ class MainDemoActivity :AppCompatActivity() {
                     runOnUiThread {
                         progress.isVisible = false
                     }
+                    Toast.makeText(this@MainDemoActivity, throwable.message, Toast.LENGTH_LONG)
+                        .show()
                     Log.e(TAG, throwable.message.toString())
                 }
             })
@@ -112,15 +119,18 @@ class MainDemoActivity :AppCompatActivity() {
 
         // Completes the authentication flow with the signed jwt for proof
         PidProviderSdk.completeAuthFlow(this, signedJwtForProof, object : IPidSdkCallback<PidCredential> {
-
             override fun onComplete(result: PidCredential?) {
-                Log.d(TAG, result.toString())
+                val tvCredential = findViewById<TextView>(R.id.tvCredential)
+                val textJson = Gson().toJson(result)
+                if(!TextUtils.isEmpty(textJson)){
+                    tvCredential.text = Gson().toJson(result)
+                    tvCredential.visibility = View.VISIBLE
+                }
+
             }
 
             override fun onError(throwable: Throwable) {
                 Log.e(TAG, throwable.message.toString())
-                Toast.makeText(this@MainDemoActivity, throwable.message, Toast.LENGTH_LONG)
-                    .show()
             }
         })
     }
