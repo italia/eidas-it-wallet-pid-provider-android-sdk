@@ -46,7 +46,7 @@ class PidProviderDemoApplication : Application() {
 
         val pidProviderConfig = PidProviderConfig
             .Builder()
-            .baseUrl("https://api.wakala.it/it-pid-provider/")
+            .baseUrl("https://localhost:8080/")
             .walletInstance(walletInstance)
             .walletUri("https://www.google.com")
             .logEnabled(true)

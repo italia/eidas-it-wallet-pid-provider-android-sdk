@@ -36,10 +36,20 @@ class MainDemoActivity :AppCompatActivity() {
 
     private fun startSDKFlow() {
         val progress = findViewById<ProgressBar>(R.id.progress)
+
+        // Retrieves the unsigned jwt for the par request
         val unsignedJwtForPar = PidProviderSdk.initJwtForPar(this)
+
+        // Generates a keypair with the Elliptic-curve cryptography to sign the jwt and jwk
         val keyPair = generateKeyPair()
+
+        // Signs the jwt for par with the generated keypair
         val signedJwtForPar = signJwt(keyPair, unsignedJwtForPar)
+
+        // Generates a JWK for DPoP with the generated keypair
         val jwkForDPoP = generateJWK(keyPair) ?: ""
+
+        // Starts the authentication flow with the signed jwt for par and the jwk for DPoP
         PidProviderSdk.startAuthFlow(
             this,
             signedJwtForPar,
@@ -62,7 +72,6 @@ class MainDemoActivity :AppCompatActivity() {
     }
 
     private fun signJwt(keyPair: KeyPair, jwtJsonString: String?): String {
-        Jwts.parser().parse(jwtJsonString)
         val unsignedJwt = Jwts.parser().parse(jwtJsonString)
         return Jwts.builder()
             .setHeader(unsignedJwt.header)
@@ -91,10 +100,19 @@ class MainDemoActivity :AppCompatActivity() {
     }
 
     private fun completeAuthFlow() {
+
+        // Retrieves the unsigned jwt for proof
         val unsignedJwtForProof = PidProviderSdk.getUnsignedJwtForProof(this)
+
+        // Generates a keypair with the Elliptic-curve cryptography to sign the jwt and jwk
         val keyPair = generateKeyPair()
+
+        // Signs the jwt for proof with the generated keypair
         val signedJwtForProof = signJwt(keyPair, unsignedJwtForProof)
+
+        // Completes the authentication flow with the signed jwt for proof
         PidProviderSdk.completeAuthFlow(this, signedJwtForProof, object : IPidSdkCallback<PidCredential> {
+
             override fun onComplete(result: PidCredential?) {
                 Log.d(TAG, result.toString())
             }
