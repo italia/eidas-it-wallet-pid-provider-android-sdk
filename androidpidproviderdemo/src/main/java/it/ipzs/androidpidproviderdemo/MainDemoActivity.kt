@@ -70,9 +70,9 @@ class MainDemoActivity :AppCompatActivity() {
                 override fun onError(throwable: Throwable) {
                     runOnUiThread {
                         progress.isVisible = false
+                        Toast.makeText(this@MainDemoActivity, throwable.message, Toast.LENGTH_LONG)
+                            .show()
                     }
-                    Toast.makeText(this@MainDemoActivity, throwable.message, Toast.LENGTH_LONG)
-                        .show()
                     Log.e(TAG, throwable.message.toString())
                 }
             })
