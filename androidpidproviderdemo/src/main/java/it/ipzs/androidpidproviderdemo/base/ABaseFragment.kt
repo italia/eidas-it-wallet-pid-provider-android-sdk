@@ -1,4 +1,4 @@
-package it.ipzs.androidpidprovider.view.base
+package it.ipzs.androidpidproviderdemo.base
 
 import android.os.Bundle
 import android.view.LayoutInflater

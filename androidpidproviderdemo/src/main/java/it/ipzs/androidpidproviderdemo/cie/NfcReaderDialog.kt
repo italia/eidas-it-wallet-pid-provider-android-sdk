@@ -1,13 +1,13 @@
-package it.ipzs.androidpidprovider.view.cie
+package it.ipzs.androidpidproviderdemo.cie
 
-import it.ipzs.androidpidprovider.databinding.DialogNfcReaderBinding
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.LinearLayout
-import it.ipzs.androidpidprovider.R
+import it.ipzs.androidpidproviderdemo.R
+import it.ipzs.androidpidproviderdemo.databinding.DialogNfcReaderBinding
 
 internal class NfcReaderDialog(
     context: Context

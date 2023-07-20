@@ -7,9 +7,6 @@
 
     <application
         android:usesCleartextTraffic="true">
-        <activity
-            android:name=".view.PidProviderActivity"
-            android:exported="false" />
     </application>
 
 </manifest>

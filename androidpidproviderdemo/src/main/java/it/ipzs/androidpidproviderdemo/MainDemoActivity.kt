@@ -1,46 +1,45 @@
 package it.ipzs.androidpidproviderdemo
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.security.keystore.KeyProperties
 import android.text.TextUtils
 import android.util.Log
-import android.view.View
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.shaded.gson.Gson
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
 import it.ipzs.androidpidprovider.external.IPidSdkCallback
 import it.ipzs.androidpidprovider.external.PidCredential
 import it.ipzs.androidpidprovider.external.PidProviderSdk
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.interfaces.ECPrivateKey
-import java.security.interfaces.ECPublicKey
-import java.util.*
+import it.ipzs.androidpidproviderdemo.Utils.generateJWK
+import it.ipzs.androidpidproviderdemo.Utils.generateKeyPair
+import it.ipzs.androidpidproviderdemo.Utils.signJwt
+import it.ipzs.androidpidproviderdemo.base.ABaseActivity
+import it.ipzs.androidpidproviderdemo.cie.NfcReaderDialog
+import it.ipzs.androidpidproviderdemo.databinding.ActivityMainDemoBinding
+import it.ipzs.cieidsdk.common.Callback
+import it.ipzs.cieidsdk.common.CieIDSdk
+import it.ipzs.cieidsdk.data.PidCieData
+import it.ipzs.cieidsdk.event.Event
 
-class MainDemoActivity :AppCompatActivity() {
+class MainDemoActivity: ABaseActivity<ActivityMainDemoBinding>(), Callback {
 
     companion object {
         val TAG: String = MainDemoActivity::class.java.simpleName
+        const val serviceProviderUrl = "https://sp.collaudo.idserver.servizicie.interno.gov.it/"
     }
+
+    override fun setBinding(): ActivityMainDemoBinding =
+        ActivityMainDemoBinding.inflate(layoutInflater)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main_demo)
         startSDKFlow()
     }
 
     private fun startSDKFlow() {
-        val progress = findViewById<ProgressBar>(R.id.progress)
-
 
         // Retrieves the unsigned jwt for the par request
         val unsignedJwtForPar = PidProviderSdk.initJwtForPar(this)
@@ -62,14 +61,14 @@ class MainDemoActivity :AppCompatActivity() {
             object : IPidSdkCallback<Boolean> {
                 override fun onComplete(result: Boolean?) {
                     runOnUiThread {
-                        progress.isVisible = false
+                        binding.progress.isVisible = false
+                        loadServiceProvider()
                     }
-                    completeAuthFlow()
                 }
 
                 override fun onError(throwable: Throwable) {
                     runOnUiThread {
-                        progress.isVisible = false
+                        binding.progress.isVisible = false
                         Toast.makeText(this@MainDemoActivity, throwable.message, Toast.LENGTH_LONG)
                             .show()
                     }
@@ -78,35 +77,7 @@ class MainDemoActivity :AppCompatActivity() {
             })
     }
 
-    private fun signJwt(keyPair: KeyPair, jwtJsonString: String?): String {
-        val unsignedJwt = Jwts.parser().parse(jwtJsonString)
-        return Jwts.builder()
-            .setHeader(unsignedJwt.header)
-            .setClaims(unsignedJwt.body as Claims)
-            .signWith(SignatureAlgorithm.ES256, keyPair.private)
-            .compact()
-    }
-
-    private fun generateKeyPair(): KeyPair {
-        val keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC)
-        keyPairGenerator.initialize(Curve.P_256.toECParameterSpec())
-        return keyPairGenerator.generateKeyPair()
-    }
-
-    private fun generateJWK(keyPair: KeyPair): String? {
-        return try {
-            val jwk = ECKey.Builder(Curve.P_256, keyPair.public as ECPublicKey)
-                .privateKey(keyPair.private as ECPrivateKey)
-                .keyUse(KeyUse.SIGNATURE)
-                .keyID(UUID.randomUUID().toString())
-                .build()
-            jwk.toJSONString()
-        } catch (e:Throwable){
-            null
-        }
-    }
-
-    private fun completeAuthFlow() {
+    private fun completeAuthFlow(cieData: PidCieData?) {
 
         // Retrieves the unsigned jwt for proof
         val unsignedJwtForProof = PidProviderSdk.getUnsignedJwtForProof(this)
@@ -118,15 +89,16 @@ class MainDemoActivity :AppCompatActivity() {
         val signedJwtForProof = signJwt(keyPair, unsignedJwtForProof)
 
         // Completes the authentication flow with the signed jwt for proof
-        PidProviderSdk.completeAuthFlow(this, signedJwtForProof, object : IPidSdkCallback<PidCredential> {
+        PidProviderSdk.completeAuthFlow(this, cieData, signedJwtForProof, object : IPidSdkCallback<PidCredential> {
             override fun onComplete(result: PidCredential?) {
-                val tvCredential = findViewById<TextView>(R.id.tvCredential)
                 val textJson = Gson().toJson(result)
                 if(!TextUtils.isEmpty(textJson)){
-                    tvCredential.text = Gson().toJson(result)
-                    tvCredential.visibility = View.VISIBLE
+                    runOnUiThread {
+                        binding.fragmentContainerView.isVisible = false
+                        binding.tvCredential.text = Gson().toJson(result)
+                        binding.tvCredential.isVisible = true
+                    }
                 }
-
             }
 
             override fun onError(throwable: Throwable) {
@@ -134,4 +106,67 @@ class MainDemoActivity :AppCompatActivity() {
             }
         })
     }
+
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun loadServiceProvider() {
+        binding.webViewPid.apply {
+            webViewClient = object : WebViewClient() {
+
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    val currentUri = request?.url
+                    if (currentUri.toString().contains("idp/login/livello3?opId")) {
+                        CieIDSdk.setUrl(currentUri.toString())
+                        binding.fragmentContainerView.isVisible = true
+                        return true
+                    }
+                    return super.shouldOverrideUrlLoading(view, request)
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    if (url == serviceProviderUrl) {
+                        // Run script to click on level 3
+                        view?.evaluateJavascript("document.getElementsByName(\"f3\")[0].submit()", null)
+                    }
+                }
+            }
+            settings.javaScriptEnabled = true
+            loadUrl(serviceProviderUrl)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        CieIDSdk.startNFCListening(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CieIDSdk.stopNFCListening(this)
+    }
+
+    // CieIdSdk Callback
+
+    override fun onEvent(event: Event) {
+        Log.d(TAG, "onEvent: $event")
+    }
+
+    override fun onError(error: Throwable) {
+        Log.d(TAG, "onError: ${error.message.toString()}")
+        runOnUiThread {
+            NfcReaderDialog.hide()
+        }
+    }
+
+    override fun onSuccess(url: String, pinCieData: PidCieData?) {
+        runOnUiThread {
+            NfcReaderDialog.hide()
+        }
+        completeAuthFlow(pinCieData)
+    }
+
 }

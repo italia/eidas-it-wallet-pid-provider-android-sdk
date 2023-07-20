@@ -3,19 +3,16 @@ package it.ipzs.androidpidprovider.utils
 import android.content.Context
 import android.util.Base64
 import com.google.gson.Gson
-import com.google.gson.JsonObject
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.util.Base64URL
+import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
 import it.ipzs.androidpidprovider.constant.AlgorithmConstant
-import it.ipzs.androidpidprovider.entity.WalletInstanceEntity
+import it.ipzs.androidpidprovider.entity.AuthorizationDetail
 import it.ipzs.androidpidprovider.storage.PidProviderSDKShared
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.security.interfaces.ECPrivateKey
 import java.util.*
-import kotlin.collections.HashMap
 
 internal object PKCEUtils {
 
@@ -45,13 +42,11 @@ internal object PKCEUtils {
         )
     }
 
-    fun computeThumbprint(walletInstanceJsonString: String): String {
-        val gson = Gson()
-        val walletInstanceEntity =
-            gson.fromJson(walletInstanceJsonString, WalletInstanceEntity::class.java)
-        val jwk = walletInstanceEntity.cnf?.jwk
-        val jwkJsonString = gson.toJson(jwk)
-
+    fun computeThumbprint(walletInstanceJwt: String): String {
+        val walletInstanceClaims = Jwts.parser().parse(walletInstanceJwt).body as? Claims
+        val cnf = walletInstanceClaims?.get("cnf") as? Map<*, *>
+        val jwk = cnf?.get("jwk") ?: return ""
+        val jwkJsonString = Gson().toJson(jwk)
         val ecKey: ECKey = ECKey.parse(jwkJsonString)
         val thumbprint: Base64URL = ecKey.computeThumbprint()
         return thumbprint.decodeToString()
@@ -69,20 +64,13 @@ internal object PKCEUtils {
             Base64URL.encode(jwkThumbprint).decode(),
             Base64.NO_PADDING or Base64.URL_SAFE or Base64.NO_WRAP
         )
-        val jsonObjectCredentialDefinition = JsonObject().apply {
-            addProperty(PKCEConstant.JWT_KEY_CLAIM, PKCEConstant.JWT_CLAIM_VALUE)
-        }
-        val jsonObjectAuthDetails = JsonObject().apply {
-            addProperty(PKCEConstant.JWT_KEY_TYPE, PKCEConstant.JWT_TYPE_VALUE)
-            addProperty(PKCEConstant.JWT_KEY_FORMAT, PKCEConstant.JWT_FORMAT_VALUE)
-            add(PKCEConstant.JWT_CREDENTIAL_DEFINITION_KEY, jsonObjectCredentialDefinition)
-        }
+        val authDetails = listOf(AuthorizationDetail())
         val mapClaimsJwt = getMapClaimsForPar(
             jwkThumbprint,
             codeChallenge,
             redirectUri,
             walletInstanceJsonString,
-            jsonObjectAuthDetails
+            authDetails
         )
         val jwtBuilder = Jwts.builder()
         jwtBuilder.setHeader(mapHeaderClaims)
@@ -118,7 +106,7 @@ internal object PKCEUtils {
         codeChallenge: String,
         redirectUri: String,
         walletInstanceAttestation: String,
-        jsonObjectAuthDetails: JsonObject
+        authDetails: List<AuthorizationDetail>
     ): HashMap<String, Any> {
         val mapClaims = HashMap<String, Any>()
         mapClaims[PKCEConstant.JWT_RESPONSE_TYPE_KEY] = PKCEConstant.JWT_RESPONSE_TYPE_VALUE
@@ -134,7 +122,7 @@ internal object PKCEUtils {
         mapClaims[PKCEConstant.JWT_CLIENT_ASSERTION_TYPE_KEY] =
             PKCEConstant.JWT_CLIENT_ASSERTION_TYPE_VALUE
         mapClaims[PKCEConstant.JWT_CLIENT_ASSERTION_KEY] = walletInstanceAttestation
-        mapClaims[PKCEConstant.JWT_AUTHORIZATION_DETAILS_KEY] = Gson().toJson(jsonObjectAuthDetails)
+        mapClaims[PKCEConstant.JWT_AUTHORIZATION_DETAILS_KEY] = authDetails
         mapClaims[PKCEConstant.JWT_STATE_KEY] = UUID.randomUUID().toString()
         return mapClaims
     }

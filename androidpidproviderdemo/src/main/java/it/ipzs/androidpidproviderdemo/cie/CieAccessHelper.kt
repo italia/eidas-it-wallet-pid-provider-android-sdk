@@ -1,7 +1,7 @@
-package it.ipzs.androidpidprovider.view.cie
+package it.ipzs.androidpidproviderdemo.cie
 
 import android.view.ViewTreeObserver
-import it.ipzs.androidpidprovider.databinding.CardNfcReadBinding
+import it.ipzs.androidpidproviderdemo.databinding.CardNfcReadBinding
 
 internal class CIEAccessHelper(private val binding: CardNfcReadBinding) {
 

@@ -1,10 +1,10 @@
-package it.ipzs.androidpidprovider.view.base
+package it.ipzs.androidpidproviderdemo.base
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewbinding.ViewBinding
 
-internal abstract class ABaseActivity<VB : ViewBinding> : AppCompatActivity(){
+abstract class ABaseActivity<VB : ViewBinding> : AppCompatActivity(){
 
     protected val binding: VB by lazy { setBinding() }
 

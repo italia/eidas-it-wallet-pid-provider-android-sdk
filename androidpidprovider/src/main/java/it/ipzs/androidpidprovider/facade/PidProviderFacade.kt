@@ -4,10 +4,10 @@ package it.ipzs.androidpidprovider.facade
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
-import it.ipzs.androidpidprovider.external.PidCredential
 import it.ipzs.androidpidprovider.network.datasource.PidProviderDataSource
 import it.ipzs.androidpidprovider.network.datasource.PidProviderDataSourceImpl
 import it.ipzs.androidpidprovider.storage.PidProviderSDKShared
+import it.ipzs.androidpidprovider.utils.PidSdkCompleteCallbackManager
 import it.ipzs.androidpidprovider.utils.PidSdkStartCallbackManager
 import it.ipzs.cieidsdk.data.PidCieData
 import kotlinx.coroutines.CompletableDeferred
@@ -40,8 +40,11 @@ internal class PidProviderFacade(
         }
     }
 
-    suspend fun getCredential(pidCieData: PidCieData?): PidCredential {
-        return pkceFacade.getCredential(pidCieData)
+    fun getCredential(pidCieData: PidCieData?) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val credential = pkceFacade.getCredential(pidCieData)
+            PidSdkCompleteCallbackManager.invokeOnComplete(credential)
+        }
     }
 
 }

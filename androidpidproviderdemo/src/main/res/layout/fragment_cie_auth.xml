@@ -11,7 +11,11 @@
         android:id="@+id/clInsertPin"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible">
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/title"
@@ -44,20 +48,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/dimen_30"
-            app:layout_constraintTop_toBottomOf="@id/subtitle"
-            android:inputType="textPassword"
-            tools:ignore="TextFields"
+            android:hint="@string/pin"
             android:importantForAutofill="no"
-            android:hint="@string/pin"/>
+            android:inputType="textPassword"
+            app:layout_constraintTop_toBottomOf="@id/subtitle"
+            tools:ignore="TextFields" />
 
         <Button
             android:id="@+id/btContinue"
             android:layout_width="match_parent"
             android:layout_height="@dimen/dimen_50"
             android:layout_marginBottom="@dimen/dimen_30"
+            android:backgroundTint="@color/soft_blue"
             android:text="@string/continue_on"
             android:textAllCaps="false"
-            android:backgroundTint="@color/soft_blue"
             android:textColor="@color/white"
             android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="parent"

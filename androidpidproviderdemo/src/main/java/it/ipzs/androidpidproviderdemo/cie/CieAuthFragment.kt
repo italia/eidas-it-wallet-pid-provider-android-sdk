@@ -1,12 +1,10 @@
-package it.ipzs.androidpidprovider.view.cie
+package it.ipzs.androidpidproviderdemo.cie
 
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
-import it.ipzs.androidpidprovider.databinding.FragmentCieAuthBinding
-import it.ipzs.androidpidprovider.utils.PidProviderConfigUtils
-import it.ipzs.androidpidprovider.view.PidProviderActivity
-import it.ipzs.androidpidprovider.view.base.ABaseFragment
+import it.ipzs.androidpidproviderdemo.base.ABaseFragment
+import it.ipzs.androidpidproviderdemo.databinding.FragmentCieAuthBinding
 import it.ipzs.cieidsdk.common.CieIDSdk
 
 internal class CieAuthFragment: ABaseFragment<FragmentCieAuthBinding>() {
@@ -42,10 +40,12 @@ internal class CieAuthFragment: ABaseFragment<FragmentCieAuthBinding>() {
 
     private fun startNFC() {
         NfcReaderDialog.show(requireContext())
-        val pidProviderActivity = activity as PidProviderActivity
+        /*
+        val pidProviderActivity = activity
         CieIDSdk.start(pidProviderActivity, pidProviderActivity)
         CieIDSdk.startNFCListening(pidProviderActivity)
-        CieIDSdk.enableLog = PidProviderConfigUtils.isLogEnabled(requireContext())
+        CieIDSdk.enableLog = true
+        */
     }
 
 }

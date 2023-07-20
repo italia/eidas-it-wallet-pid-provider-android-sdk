@@ -8,7 +8,7 @@ import it.ipzs.androidpidprovider.storage.PidProviderSDKShared
 import it.ipzs.androidpidprovider.utils.PidProviderSDKUtils
 import it.ipzs.androidpidprovider.utils.PidSdkStartCallbackManager
 import it.ipzs.androidpidprovider.utils.PidSdkCompleteCallbackManager
-import it.ipzs.androidpidprovider.view.PidProviderActivity
+import it.ipzs.cieidsdk.data.PidCieData
 
 object PidProviderSdk {
 
@@ -33,9 +33,9 @@ object PidProviderSdk {
         return PidProviderSDKShared.getInstance(context).getUnsignedJWTProof()
     }
 
-    fun completeAuthFlow(activity: AppCompatActivity, signedJwtForProof: String, pidSdkCallback: IPidSdkCallback<PidCredential>){
+    fun completeAuthFlow(activity: AppCompatActivity, pidCieData: PidCieData?, signedJwtForProof: String, pidSdkCallback: IPidSdkCallback<PidCredential>){
         PidProviderSDKShared.getInstance(activity).saveSignedJWTProof(signedJwtForProof)
-        PidProviderActivity.start(activity)
+        PidProviderFacade(activity).getCredential(pidCieData)
         PidSdkCompleteCallbackManager.setSDKCallback(pidSdkCallback)
     }
 
