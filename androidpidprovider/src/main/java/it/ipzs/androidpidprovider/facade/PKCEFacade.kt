@@ -39,8 +39,7 @@ internal class PKCEFacade(
             return PKCEUtils.generateJWTForPar(
                 jwkThumbprint,
                 codeChallenge,
-                redirectUri,
-                walletInstanceJwt
+                redirectUri
             )
         } catch (exception: Throwable) {
             return null
