@@ -5,14 +5,15 @@ import android.util.Base64
 import com.google.gson.Gson
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.util.Base64URL
-import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import it.ipzs.androidpidprovider.constant.AlgorithmConstant
 import it.ipzs.androidpidprovider.entity.AuthorizationDetail
+import it.ipzs.androidpidprovider.entity.WalletInstanceEntity
 import it.ipzs.androidpidprovider.storage.PidProviderSDKShared
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.*
+
 
 internal object PKCEUtils {
 
@@ -42,10 +43,13 @@ internal object PKCEUtils {
         )
     }
 
+
     fun computeThumbprint(walletInstanceJwt: String): String {
-        val walletInstanceClaims = Jwts.parser().parse(walletInstanceJwt).body as? Claims
-        val cnf = walletInstanceClaims?.get("cnf") as? Map<*, *>
-        val jwk = cnf?.get("jwk") ?: return ""
+
+        val body = walletInstanceJwt.split(".")[1]
+        val jsonString = Base64.decode(body, Base64.DEFAULT).toString(charset("UTF-8"))
+        val walletInstance = Gson().fromJson(jsonString, WalletInstanceEntity::class.java)
+        val jwk = walletInstance.cnf?.jwk ?: return ""
         val jwkJsonString = Gson().toJson(jwk)
         val ecKey: ECKey = ECKey.parse(jwkJsonString)
         val thumbprint: Base64URL = ecKey.computeThumbprint()
@@ -55,8 +59,7 @@ internal object PKCEUtils {
     fun generateJWTForPar(
         jwkThumbprint: String,
         codeChallenge: String,
-        redirectUri: String,
-        walletInstanceJsonString: String
+        redirectUri: String
     ): String {
         val mapHeaderClaims = HashMap<String, Any>()
         mapHeaderClaims[PKCEConstant.HEADER_JWT_ALG_KEY] = PKCEConstant.HEADER_JWT_ALG_VALUE
@@ -69,7 +72,6 @@ internal object PKCEUtils {
             jwkThumbprint,
             codeChallenge,
             redirectUri,
-            walletInstanceJsonString,
             authDetails
         )
         val jwtBuilder = Jwts.builder()
@@ -105,7 +107,6 @@ internal object PKCEUtils {
         jwkThumbprint: String,
         codeChallenge: String,
         redirectUri: String,
-        walletInstanceAttestation: String,
         authDetails: List<AuthorizationDetail>
     ): HashMap<String, Any> {
         val mapClaims = HashMap<String, Any>()
@@ -121,7 +122,6 @@ internal object PKCEUtils {
 
         mapClaims[PKCEConstant.JWT_CLIENT_ASSERTION_TYPE_KEY] =
             PKCEConstant.JWT_CLIENT_ASSERTION_TYPE_VALUE
-        mapClaims[PKCEConstant.JWT_CLIENT_ASSERTION_KEY] = walletInstanceAttestation
         mapClaims[PKCEConstant.JWT_AUTHORIZATION_DETAILS_KEY] = authDetails
         mapClaims[PKCEConstant.JWT_STATE_KEY] = UUID.randomUUID().toString()
         return mapClaims

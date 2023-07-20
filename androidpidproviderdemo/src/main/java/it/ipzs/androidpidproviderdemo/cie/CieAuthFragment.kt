@@ -3,6 +3,7 @@ package it.ipzs.androidpidproviderdemo.cie
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
+import it.ipzs.androidpidproviderdemo.MainDemoActivity
 import it.ipzs.androidpidproviderdemo.base.ABaseFragment
 import it.ipzs.androidpidproviderdemo.databinding.FragmentCieAuthBinding
 import it.ipzs.cieidsdk.common.CieIDSdk
@@ -40,12 +41,11 @@ internal class CieAuthFragment: ABaseFragment<FragmentCieAuthBinding>() {
 
     private fun startNFC() {
         NfcReaderDialog.show(requireContext())
-        /*
-        val pidProviderActivity = activity
-        CieIDSdk.start(pidProviderActivity, pidProviderActivity)
-        CieIDSdk.startNFCListening(pidProviderActivity)
-        CieIDSdk.enableLog = true
-        */
+        val pidProviderActivity = activity as? MainDemoActivity
+        if (pidProviderActivity != null) {
+            CieIDSdk.start(pidProviderActivity, pidProviderActivity)
+            CieIDSdk.startNFCListening(pidProviderActivity)
+        }
     }
 
 }
