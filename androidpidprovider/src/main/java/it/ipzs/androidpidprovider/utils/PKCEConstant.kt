@@ -14,19 +14,11 @@ internal object PKCEConstant {
 
     const val HEADER_JWT_TYP_VALUE = "openid4vci-proof+jwt"
 
-    const val JWT_KEY_CLAIM = "claim"
-
     const val JWT_CLAIM_VALUE = "eu.eudiw.pid.it"
-
-    const val JWT_KEY_TYPE = "type"
 
     const val JWT_TYPE_VALUE = "type"
 
-    const val JWT_KEY_FORMAT = "format"
-
     const val JWT_FORMAT_VALUE = "vc+sd-jwt"
-
-    const val JWT_CREDENTIAL_DEFINITION_KEY = "credential_definition"
 
     const val JWT_RESPONSE_TYPE_KEY = "response_type"
 

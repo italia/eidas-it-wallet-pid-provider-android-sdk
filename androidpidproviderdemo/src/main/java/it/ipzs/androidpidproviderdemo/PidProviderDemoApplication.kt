@@ -23,30 +23,11 @@ class PidProviderDemoApplication : Application() {
     }
 
     private fun initializeSDK() {
-        val walletInstance = "{\n" +
-                "  \"iss\": \"https://wallet-provider.example.org\",\n" +
-                "  \"sub\": \"thumprint-of-the-jwk-in-the-cnf-identifiying-the-wallet\",\n" +
-                "  \"iat\": 1665137911,\n" +
-                "  \"exp\": 1665138911,\n" +
-                "  \"type\": \"WalletInstanceAttestation\",\n" +
-                "  \"supported_LoA\": \"high\",\n" +
-                "  \"policy_uri\": \"https://wallet-provider.example.com/privacy_policy\",\n" +
-                "  \"tos_uri\": \"https://wallet-provider.example.com/info_policy\",\n" +
-                "  \"logo_uri\": \"https://wallet-provider.example.com/sgd-cmyk-150dpi-90mm.svg\",\n" +
-                "  \"cnf\": {\n" +
-                "    \"jwk\": {\n" +
-                "        \"kty\": \"EC\",\n" +
-                "        \"kid\": \"wallet-pub-jwk-kid\",\n" +
-                "        \"crv\": \"P-256\",\n" +
-                "        \"x\": \"a1MdTboSUbq4SOx4LmhOI2AewVkZWDQD0gP9nOiSnHU\",\n" +
-                "        \"y\": \"f8n1IgpfYOBFZM0KxkTd0N5Y2P-INNmU_6S-gDro_FE\"\n" +
-                "   }\n" +
-                "  }\n" +
-                "}\n"
+        val walletInstance = "eyJhbGciOiJub25lIn0.eyJyZXNwb25zZV90eXBlc19zdXBwb3J0ZWQiOlsidnBfdG9rZW4iXSwic3ViIjoidmJlWEprc000NXhwaHRBTm5DaUc2bUN5dVU0amZHTnpvcEd1S3ZvZ2c5YyIsImxvZ29fdXJpIjoiaHR0cHM6Ly93YWxsZXQtcHJvdmlkZXIuZXhhbXBsZS5vcmcvbG9nby5zdmdcIiIsImlzcyI6Imh0dHBzOi8vd2FsbGV0LXByb3ZpZGVyLmV4YW1wbGUub3JnIiwidHlwZSI6IldhbGxldEluc3RhbmNlQXR0ZXN0YXRpb24iLCJwcmVzZW50YXRpb25fZGVmaW5pdGlvbl91cmlfc3VwcG9ydGVkIjpmYWxzZSwidnBfZm9ybWF0c19zdXBwb3J0ZWQiOnsiand0VmNKc29uIjp7ImFsZ1ZhbHVlc1N1cHBvcnRlZCI6WyJFUzI1NiJdfSwiand0VnBKc29uIjp7ImFsZ1ZhbHVlc1N1cHBvcnRlZCI6WyJFUzI1NiJdfX0sImF1dGhvcml6YXRpb25fZW5kcG9pbnQiOiJldWRpdzoiLCJhc2MiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLm9yZy9Mb0EvYmFzaWMiLCJjbmYiOnsiandrIjp7ImNydiI6IlAtMjU2Iiwia2lkIjoidmJlWEprc000NXhwaHRBTm5DaUc2bUN5dVU0amZHTnpvcEd1S3ZvZ2c5YyIsImt0eSI6IkVDIiwieCI6IjRITnB0SS14cjJwanlSSktHTW56NFdtZG5RRF91SlNxNFI5NU5qOThiNDQiLCJ5IjoiTElablNCMzl2RkpoWWdTM2s3alhFNHIzLUNvR0ZRd1p0UEJJUnFwTmxyZyJ9fSwidG9zX3VyaSI6Imh0dHBzOi8vd2FsbGV0LXByb3ZpZGVyLmV4YW1wbGUub3JnL2luZm9fcG9saWN5IiwiZXhwIjoiMTY5NDMzMjgwMDAwMCIsImlhdCI6IjE2ODk4MDYyMDQyNzQiLCJyZXF1ZXN0X29iamVjdF9zaWduaW5nX2FsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il0sInBvbGljeV91cmkiOiJodHRwczovL3dhbGxldC1wcm92aWRlci5leGFtcGxlLm9yZy9wcml2YWN5X3BvbGljeSJ9."
 
         val pidProviderConfig = PidProviderConfig
             .Builder()
-            .baseUrl("https://localhost:8080/")
+            .baseUrl("https://localhost:8080/") // TODO: Update base url
             .walletInstance(walletInstance)
             .walletUri("https://www.google.com")
             .logEnabled(true)

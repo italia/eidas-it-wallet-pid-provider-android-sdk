@@ -31,16 +31,16 @@ internal class PKCEFacade(
             sharedPref.saveCodeVerifier(codeVerifier)
             val codeChallenge = PKCEUtils.createCodeChallenge(codeVerifier)
             sharedPref.saveCodeChallenge(codeChallenge)
-            val walletInstanceJsonString =
+            val walletInstanceJwt =
                 PidProviderConfigUtils.getWalletInstanceAttestation(context)
             val redirectUri = sharedPref.getWalletUri()
-            val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJsonString)
+            val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJwt)
             sharedPref.saveClientId(jwkThumbprint)
             return PKCEUtils.generateJWTForPar(
                 jwkThumbprint,
                 codeChallenge,
                 redirectUri,
-                walletInstanceJsonString
+                walletInstanceJwt
             )
         } catch (exception: Throwable) {
             return null
@@ -53,9 +53,9 @@ internal class PKCEFacade(
             try {
                 val sharedPref = PidProviderSDKShared.getInstance(context)
                 val codeChallenge = sharedPref.getCodeChallenge()
-                val walletInstanceJsonString =
+                val walletInstanceJwt =
                     PidProviderConfigUtils.getWalletInstanceAttestation(context)
-                val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJsonString)
+                val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJwt)
                 sharedPref.saveClientId(jwkThumbprint)
 
                 val parResponse = dataSource.requestPar(
@@ -64,7 +64,7 @@ internal class PKCEFacade(
                     codeChallenge = codeChallenge,
                     codeChallengeMethod = PKCEConstant.JWT_CODE_CHALLENGE_METHOD_VALUE,
                     clientAssertionType = PKCEConstant.JWT_CLIENT_ASSERTION_TYPE_VALUE,
-                    clientAssertion = walletInstanceJsonString,
+                    clientAssertion = walletInstanceJwt,
                     request = signedJwtForPar
                 )
 
@@ -115,8 +115,7 @@ internal class PKCEFacade(
                                     "document.getElementById('password').value = 'password'; " +
                                     "document.getElementById('password').readOnly = true;" +
                                     "document.getElementsByClassName('form-signin')[0].submit()"
-                            view?.evaluateJavascript(jsScript
-                            ) { p0 -> cdCode.complete(p0) }
+                            view?.evaluateJavascript(jsScript, null)
                         }
                     }
 
@@ -139,9 +138,9 @@ internal class PKCEFacade(
         withContext(Dispatchers.IO) {
             try {
                 val sharedPreferences = PidProviderSDKShared.getInstance(context)
-                val walletInstanceJsonString =
+                val walletInstanceJwt =
                     PidProviderConfigUtils.getWalletInstanceAttestation(context)
-                val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJsonString)
+                val jwkThumbprint = PKCEUtils.computeThumbprint(walletInstanceJwt)
                 val codeVerifier = sharedPreferences.getCodeVerifier()
 
                 val tokenUrl = UrlUtils.buildTokenUrl(context)
@@ -153,7 +152,7 @@ internal class PKCEFacade(
                     code = code,
                     codeVerifier = codeVerifier,
                     clientAssertionType = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                    clientAssertion = walletInstanceJsonString,
+                    clientAssertion = walletInstanceJwt,
                     redirectUri = redirectUri
                 )
                 if (tokenResponse != null) {
