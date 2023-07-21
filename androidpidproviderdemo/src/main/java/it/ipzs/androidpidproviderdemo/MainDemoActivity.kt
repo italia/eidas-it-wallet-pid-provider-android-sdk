@@ -103,6 +103,10 @@ class MainDemoActivity: ABaseActivity<ActivityMainDemoBinding>(), Callback {
 
             override fun onError(throwable: Throwable) {
                 Log.e(TAG, throwable.message.toString())
+                runOnUiThread {
+                    Toast.makeText(this@MainDemoActivity, throwable.message, Toast.LENGTH_LONG)
+                        .show()
+                }
             }
         })
     }
@@ -159,6 +163,8 @@ class MainDemoActivity: ABaseActivity<ActivityMainDemoBinding>(), Callback {
         Log.d(TAG, "onError: ${error.message.toString()}")
         runOnUiThread {
             NfcReaderDialog.hide()
+            Toast.makeText(this@MainDemoActivity, error.message, Toast.LENGTH_LONG)
+                .show()
         }
     }
 

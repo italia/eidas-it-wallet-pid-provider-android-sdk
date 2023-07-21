@@ -53,7 +53,7 @@ internal object PKCEUtils {
         val jwkJsonString = Gson().toJson(jwk)
         val ecKey: ECKey = ECKey.parse(jwkJsonString)
         val thumbprint: Base64URL = ecKey.computeThumbprint()
-        return thumbprint.decodeToString()
+        return thumbprint.toString()
     }
 
     fun generateJWTForPar(
