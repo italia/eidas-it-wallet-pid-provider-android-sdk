@@ -91,11 +91,12 @@ class MainDemoActivity: ABaseActivity<ActivityMainDemoBinding>(), Callback {
         // Completes the authentication flow with the signed jwt for proof
         PidProviderSdk.completeAuthFlow(this, cieData, signedJwtForProof, object : IPidSdkCallback<PidCredential> {
             override fun onComplete(result: PidCredential?) {
-                val textJson = Gson().toJson(result)
-                if(!TextUtils.isEmpty(textJson)){
+                val credential = result?.credential
+                val jwtJsonBody = Utils.decodeJwt(credential)
+                if(!jwtJsonBody.isNullOrEmpty()){
                     runOnUiThread {
                         binding.fragmentContainerView.isVisible = false
-                        binding.tvCredential.text = Gson().toJson(result)
+                        binding.tvCredential.text = jwtJsonBody
                         binding.tvCredential.isVisible = true
                     }
                 }

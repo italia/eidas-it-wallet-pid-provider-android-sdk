@@ -1,12 +1,14 @@
 package it.ipzs.androidpidproviderdemo
 
 import android.security.keystore.KeyProperties
+import android.util.Base64
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.KeyUse
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
+import org.json.JSONObject
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.interfaces.ECPrivateKey
@@ -40,6 +42,18 @@ object Utils {
             jwk.toJSONString()
         } catch (e:Throwable){
             null
+        }
+    }
+
+    fun decodeJwt(credential: String?): String? {
+        return try {
+            val credentialArray = credential?.split(".")
+            val jwtBodyString = credentialArray?.get(1)
+            val jsonBodyString = Base64.decode(jwtBodyString, Base64.DEFAULT).toString(charset("UTF-8"))
+            val jsonObject = JSONObject(jsonBodyString)
+            jsonObject.toString(4)
+        } catch (e: Throwable) {
+            e.message.toString()
         }
     }
 }

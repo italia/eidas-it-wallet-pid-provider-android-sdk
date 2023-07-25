@@ -18,7 +18,7 @@ class PidProviderDemoApplication : Application() {
 
         val pidProviderConfig = PidProviderConfig
             .Builder()
-            .baseUrl("https://localhost:8080/") // TODO: Update base url
+            .baseUrl("https://api.eudi-wallet-it-pid-provider.it/")
             .walletInstance(walletInstance)
             .walletUri("https://www.google.com")
             .logEnabled(true)
