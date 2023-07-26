@@ -2,14 +2,14 @@ package it.ipzs.androidpidproviderdemo
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.text.TextUtils
 import android.util.Log
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.core.view.isVisible
-import com.nimbusds.jose.shaded.gson.Gson
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import it.ipzs.androidpidprovider.external.IPidSdkCallback
 import it.ipzs.androidpidprovider.external.PidCredential
 import it.ipzs.androidpidprovider.external.PidProviderSdk
@@ -17,12 +17,14 @@ import it.ipzs.androidpidproviderdemo.Utils.generateJWK
 import it.ipzs.androidpidproviderdemo.Utils.generateKeyPair
 import it.ipzs.androidpidproviderdemo.Utils.signJwt
 import it.ipzs.androidpidproviderdemo.base.ABaseActivity
+import it.ipzs.androidpidproviderdemo.cie.DisclosureAdapter
 import it.ipzs.androidpidproviderdemo.cie.NfcReaderDialog
 import it.ipzs.androidpidproviderdemo.databinding.ActivityMainDemoBinding
 import it.ipzs.cieidsdk.common.Callback
 import it.ipzs.cieidsdk.common.CieIDSdk
 import it.ipzs.cieidsdk.data.PidCieData
 import it.ipzs.cieidsdk.event.Event
+
 
 class MainDemoActivity: ABaseActivity<ActivityMainDemoBinding>(), Callback {
 
@@ -36,6 +38,7 @@ class MainDemoActivity: ABaseActivity<ActivityMainDemoBinding>(), Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        registerForContextMenu(binding.tvCredential)
         startSDKFlow()
     }
 
@@ -92,12 +95,18 @@ class MainDemoActivity: ABaseActivity<ActivityMainDemoBinding>(), Callback {
         PidProviderSdk.completeAuthFlow(this, cieData, signedJwtForProof, object : IPidSdkCallback<PidCredential> {
             override fun onComplete(result: PidCredential?) {
                 val credential = result?.credential
+                Utils.decodeClaims(credential)
                 val jwtJsonBody = Utils.decodeJwt(credential)
+                val disclosureArrayList = Utils.decodeClaims(credential)
                 if(!jwtJsonBody.isNullOrEmpty()){
                     runOnUiThread {
                         binding.fragmentContainerView.isVisible = false
+                        binding.resultScrollView.isVisible = true
                         binding.tvCredential.text = jwtJsonBody
-                        binding.tvCredential.isVisible = true
+                        binding.disclosureList.apply {
+                            adapter = DisclosureAdapter(disclosureArrayList)
+                            layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+                        }
                     }
                 }
             }

@@ -2,6 +2,7 @@ package it.ipzs.androidpidproviderdemo
 
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import com.authlete.sd.Disclosure
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.KeyUse
@@ -54,6 +55,22 @@ object Utils {
             jsonObject.toString(4)
         } catch (e: Throwable) {
             e.message.toString()
+        }
+    }
+
+    fun decodeClaims(credentialJwt: String?): ArrayList<Disclosure> {
+        val disclosureList: ArrayList<Disclosure> = arrayListOf()
+        return try {
+            val sdJwtArray = credentialJwt?.split("~") ?: emptyList()
+            sdJwtArray.forEachIndexed { index, value ->
+                if (index != 0) {
+                    val disclosure = Disclosure.parse(value)
+                    disclosureList.add(disclosure)
+                }
+            }
+            disclosureList
+        } catch (e: Throwable) {
+            disclosureList
         }
     }
 }
